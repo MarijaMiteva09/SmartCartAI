@@ -44,7 +44,9 @@ const CartPage = () => {
         </div>
       ))}
       <h3>Total: ${totalPrice.toFixed(2)}</h3>
-      <button style={styles.checkout}>Proceed to Checkout</button>
+      <Link to="/checkout">
+       <button style={styles.checkout}>Proceed to Checkout</button>
+      </Link>
     </div>
   );
 };
