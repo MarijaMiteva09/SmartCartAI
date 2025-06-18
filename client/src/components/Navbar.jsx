@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext'; 
 
@@ -6,9 +6,19 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const [searchTerm, setSearchTerm] = useState('');
+
   const handleLogout = () => {
     logout();          
     navigate('/');
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm('');
+    }
   };
 
   return (
@@ -16,6 +26,18 @@ const Navbar = () => {
       <div style={styles.logo}>
         <Link to="/" style={styles.link}>🛍️ SmartCartAI</Link>
       </div>
+
+      <form onSubmit={handleSearchSubmit} style={styles.searchForm}>
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={styles.searchInput}
+        />
+        <button type="submit" style={styles.searchButton}>Search</button>
+      </form>
+
       <div style={styles.links}>
         <Link to="/" style={styles.link}>Home</Link>
         <Link to="/cart" style={styles.link}>Cart</Link>
@@ -48,6 +70,25 @@ const styles = {
   logo: {
     fontSize: '20px',
     fontWeight: 'bold',
+  },
+  searchForm: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+  },
+  searchInput: {
+    padding: '5px 10px',
+    borderRadius: '3px',
+    border: 'none',
+    fontSize: '16px',
+  },
+  searchButton: {
+    padding: '6px 12px',
+    borderRadius: '3px',
+    border: 'none',
+    backgroundColor: '#444',
+    color: '#fff',
+    cursor: 'pointer',
   },
   links: {
     display: 'flex',

@@ -8,9 +8,10 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import SearchResults from './pages/SearchResults';
 
 import { CartProvider } from './context/CartContext';
-import { AuthProvider } from './context/AuthContext';  // ✅ NEW
+import { AuthProvider } from './context/AuthContext';  
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/search" element={<SearchResults />} />
             <Route
               path="/checkout"
               element={

@@ -133,6 +133,41 @@ app.post('/api/products/import', async (req, res) => {
   }
 });
 
+// Search and filter products
+app.get('/api/products/search', (req, res) => {
+  const { query, category, minPrice, maxPrice } = req.query;
+
+  let sql = 'SELECT * FROM products WHERE 1=1';
+  const params = [];
+
+  
+  if (query) {
+  sql += ' AND (name LIKE ? OR description LIKE ?)';
+  params.push(`%${query}%`, `%${query}%`);
+   }
+
+  if (category) {
+    sql += ' AND category = ?';
+    params.push(category);
+  }
+  if (minPrice) {
+    sql += ' AND price >= ?';
+    params.push(minPrice);
+  }
+  if (maxPrice) {
+    sql += ' AND price <= ?';
+    params.push(maxPrice);
+  }
+
+  db.query(sql, params, (err, results) => {
+    if (err) {
+      console.error('Search query error:', err);
+      return res.status(500).send('Error fetching products');
+    }
+    res.json(results);
+  });
+});
+
 app.get('/api/products', (req, res) => {
   db.query('SELECT * FROM products', (err, results) => {
     if (err) return res.status(500).send('Error fetching products');
