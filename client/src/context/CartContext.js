@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 // Create context
 const CartContext = createContext();
@@ -11,11 +11,22 @@ export const CartProvider = ({ children }) => {
 
   const API_BASE = 'http://localhost:5000/api/cart';
 
-  // Fetch cart items from backend on mount
-  const fetchCartItems = async () => {
+  // Helper: Get auth headers with JWT token
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+  // Fetch cart items from backend, stable with useCallback
+  const fetchCartItems = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(API_BASE);
+      const res = await fetch(API_BASE, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to fetch cart');
       const data = await res.json();
       setCartItems(data);
@@ -24,25 +35,22 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
   useEffect(() => {
     fetchCartItems();
-  }, []);
+  }, [fetchCartItems]); // fetchCartItems included here because it's stable
 
   // Add product to cart
   const addToCart = async (product) => {
     try {
-      // Check if product already in cart
       const existingItem = cartItems.find(item => item.product_id === product.id);
       if (existingItem) {
-        // Increase quantity if exists
         await updateQuantity(existingItem.id, existingItem.quantity + 1);
       } else {
-        // Add new cart item
         const res = await fetch(API_BASE, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ product_id: product.id, quantity: 1 }),
         });
         if (!res.ok) throw new Error('Failed to add to cart');
@@ -56,7 +64,10 @@ export const CartProvider = ({ children }) => {
   // Remove item from cart
   const removeFromCart = async (cartItemId) => {
     try {
-      const res = await fetch(`${API_BASE}/${cartItemId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/${cartItemId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to remove item');
       setCartItems(prev => prev.filter(item => item.id !== cartItemId));
     } catch (error) {
@@ -66,47 +77,47 @@ export const CartProvider = ({ children }) => {
 
   // Update quantity of an item
   const updateQuantity = async (cartItemId, quantity) => {
-    if (quantity < 1) return removeFromCart(cartItemId);
+  if (quantity < 1) return removeFromCart(cartItemId);
 
-    try {
-      const res = await fetch(`${API_BASE}/${cartItemId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity }),
-      });
-      if (!res.ok) throw new Error('Failed to update quantity');
-      // Update local state with new quantity
-      setCartItems(prev =>
-        prev.map(item =>
-          item.id === cartItemId ? { ...item, quantity } : item
-        )
-      );
-    } catch (error) {
-      console.error('Update quantity error:', error);
-    }
-  };
-
-  // Add these inside CartProvider, below updateQuantity
-const increaseQuantity = (cartItemId) => {
-  const item = cartItems.find(item => item.id === cartItemId);
-  if (item) updateQuantity(cartItemId, item.quantity + 1);
-};
-
-const decreaseQuantity = (cartItemId) => {
-  const item = cartItems.find(item => item.id === cartItemId);
-  if (item && item.quantity > 1) {
-    updateQuantity(cartItemId, item.quantity - 1);
-  } else {
-    removeFromCart(cartItemId);
+  try {
+    const res = await fetch(`${API_BASE}/${cartItemId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ quantity }),
+    });
+    if (!res.ok) throw new Error('Failed to update quantity');
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === cartItemId ? { ...item, quantity } : item
+      )
+    );
+  } catch (error) {
+    console.error('Update quantity error:', error);
   }
 };
 
 
-  // Clear entire cart (optional)
+  const increaseQuantity = (cartItemId) => {
+    const item = cartItems.find(item => item.id === cartItemId);
+    if (item) updateQuantity(cartItemId, item.quantity + 1);
+  };
+
+  const decreaseQuantity = (cartItemId) => {
+    const item = cartItems.find(item => item.id === cartItemId);
+    if (item && item.quantity > 1) {
+      updateQuantity(cartItemId, item.quantity - 1);
+    } else {
+      removeFromCart(cartItemId);
+    }
+  };
+
+  // Clear entire cart
   const clearCart = async () => {
     try {
-      // Assuming you have an API endpoint to clear the cart (optional)
-      const res = await fetch(`${API_BASE}/clear`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/clear`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to clear cart');
       setCartItems([]);
     } catch (error) {
@@ -123,8 +134,9 @@ const decreaseQuantity = (cartItemId) => {
         removeFromCart,
         updateQuantity,
         clearCart,
-        increaseQuantity,    
-        decreaseQuantity     
+        increaseQuantity,
+        decreaseQuantity,
+        fetchCartItems, // exposed for external calls like after login
       }}
     >
       {children}

@@ -70,11 +70,29 @@ app.post('/api/login', (req, res) => {
       console.error('DB error:', err);
       return res.status(500).json({ message: 'Database error' });
     }
-    if (results.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
+
+    if (results.length === 0) {
+      console.warn('❌ No user found with email:', email);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     const user = results[0];
+
+    // 🔍 DEBUG: Log incoming password and stored hash
+    console.log('🔐 Attempting login...');
+    console.log('👉 Email:', email);
+    console.log('👉 Password entered:', password);
+    console.log('👉 Hashed password in DB:', user.password_hash);
+
     const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) return res.status(401).json({ message: 'Invalid credentials' });
+
+    // 🔍 DEBUG: Log result of bcrypt comparison
+    console.log('✅ Password match result:', match);
+
+    if (!match) {
+      console.warn('❌ Password did not match for user:', email);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
@@ -83,26 +101,6 @@ app.post('/api/login', (req, res) => {
       user: { id: user.id, full_name: user.full_name, email: user.email },
     });
   });
-});
-
-// Add product to cart (protected)
-app.post('/api/cart', authenticate, (req, res) => {
-  const { productId, quantity } = req.body;
-  const userId = req.user.id;
-
-  if (!productId || !quantity) return res.status(400).json({ message: 'Product ID and quantity required' });
-
-  db.query(
-    'INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + ?',
-    [userId, productId, quantity, quantity],
-    (err) => {
-      if (err) {
-        console.error('DB error:', err);
-        return res.status(500).json({ message: 'Failed to add to cart' });
-      }
-      res.json({ message: 'Product added to cart' });
-    }
-  );
 });
 
 // === PRODUCTS ===
@@ -164,6 +162,7 @@ app.get('/api/cart', authenticate, (req, res) => {
     });
 });
 
+// POST /api/cart - add or update cart item
 app.post('/api/cart', authenticate, (req, res) => {
   const { product_id, quantity } = req.body;
   if (!product_id || !quantity) return res.status(400).send('Required fields missing');
