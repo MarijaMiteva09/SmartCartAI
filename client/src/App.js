@@ -14,6 +14,8 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';  
 import PrivateRoute from './components/PrivateRoute';
 
+import ChatBot from './chatbot/ChatBot';
+
 function App() {
   return (
     <AuthProvider>
@@ -36,6 +38,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Routes>
+          <ChatBot/>
         </Router>
       </CartProvider>
     </AuthProvider>

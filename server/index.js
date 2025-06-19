@@ -286,6 +286,33 @@ app.get('/api/orders/history', authenticate, (req, res) => {
   });
 });
 
+// === CHATBOT ===
+app.post('/api/chat', async (req, res) => {
+  const { message } = req.body;
+
+  try {
+    const response = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: 'openai/gpt-3.5-turbo', // Or try: 'mistralai/mixtral-8x7b'
+        messages: [{ role: 'user', content: message }],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const reply = response.data.choices[0].message.content;
+    res.json({ reply });
+  } catch (error) {
+    console.error('Chat error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Chatbot failed to respond' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
