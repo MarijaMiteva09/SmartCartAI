@@ -49,7 +49,7 @@ const Home = () => {
 
   return (
     <div style={styles.container}>
-      <h1>🛍️ SmartCartAI Products</h1>
+      <h1>🛍️ Smart Cart AI Products</h1>
       <div style={styles.grid}>
         {products.map(product => (
           <ProductCard key={product.id} product={product} />

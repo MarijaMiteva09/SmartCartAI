@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const SearchProducts = () => {
   const [query, setQuery] = useState('');
@@ -31,57 +32,89 @@ const SearchProducts = () => {
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (query || category || minPrice || maxPrice) fetchResults();
-      else setResults([]); // clear results if no filters
+      if (query || category || minPrice || maxPrice) {
+        fetchResults();
+      } else {
+        setResults([]);
+      }
     }, 500);
-
     return () => clearTimeout(delayDebounce);
   }, [query, category, minPrice, maxPrice]);
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 600, margin: 'auto' }}>
-      <h2>Search Products</h2>
-      <input
-        type="text"
-        placeholder="Search products"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        style={{ marginRight: 8 }}
-      />
-      <input
-        type="text"
-        placeholder="Category"
-        value={category}
-        onChange={e => setCategory(e.target.value)}
-        style={{ marginRight: 8 }}
-      />
-      <input
-        type="number"
-        placeholder="Min price"
-        value={minPrice}
-        onChange={e => setMinPrice(e.target.value)}
-        style={{ marginRight: 8, width: 100 }}
-      />
-      <input
-        type="number"
-        placeholder="Max price"
-        value={maxPrice}
-        onChange={e => setMaxPrice(e.target.value)}
-        style={{ marginRight: 8, width: 100 }}
-      />
+    <div className="container py-4">
+      <h2 className="mb-4 text-center">🔍 Search Products</h2>
 
-      {loading ? <p>Loading...</p> : (
-        results.length > 0 ? (
-          <ul>
-            {results.map(product => (
-              <li key={product.id}>
-                <strong>{product.name}</strong> — ${product.price}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          (query || category || minPrice || maxPrice) && <p>No results found</p>
-        )
+      <div className="row g-3 mb-4">
+        <div className="col-md-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search products"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <div className="col-md-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+        </div>
+        <div className="col-md-3">
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Min Price"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+          />
+        </div>
+        <div className="col-md-3">
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Max Price"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {loading && <p className="text-center">Loading...</p>}
+
+      {!loading && results.length > 0 && (
+        <div className="row g-4">
+          {results.map(product => (
+            <div key={product.id} className="col-md-4">
+              <div className="card h-100 shadow-sm">
+                <img
+                  src={product.image_url}
+                  className="card-img-top"
+                  alt={product.name}
+                  style={{ objectFit: 'cover', height: '200px' }}
+                />
+                <div className="card-body d-flex flex-column justify-content-between">
+                  <div>
+                    <h5 className="card-title">{product.name}</h5>
+                    <p className="card-text text-muted">{product.category}</p>
+                    <p className="card-text fw-bold">${product.price.toFixed(2)}</p>
+                  </div>
+                  <Link to={`/product/${product.id}`} className="btn btn-primary mt-2">
+                    View Details
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && results.length === 0 && (query || category || minPrice || maxPrice) && (
+        <p className="text-center text-muted">No results found ❌</p>
       )}
     </div>
   );
