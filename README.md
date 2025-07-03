@@ -24,7 +24,7 @@
 - **Database:** MySQL
 - **Authentication:** JWT (JSON Web Tokens)
 - **AI Chatbot:** OpenRouter API (OpenAI GPT-3.5 Turbo)
-- **Styling:** CSS Modules / Inline styles (no Tailwind)
+- **Styling:** CSS Modules / Inline styles
 
 ---
 
